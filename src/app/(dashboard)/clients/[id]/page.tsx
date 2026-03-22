@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { clientSchema, type ClientInput } from "@/lib/validations";
-import { DOCUMENT_TYPES } from "@/lib/s3";
+import { DOCUMENT_TYPES } from "@/lib/storage";
 import type { Client, Document } from "@/types";
 import {
   formatDate,
@@ -123,14 +123,8 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
     }
   }
 
-  async function handleDownload(docId: string) {
-    const res = await fetch(`/api/documents/${docId}/download`);
-    if (!res.ok) {
-      toast({ type: "error", title: "Failed to get download link" });
-      return;
-    }
-    const { url } = await res.json();
-    window.open(url, "_blank");
+  function handleDownload(docId: string) {
+    window.open(`/api/documents/${docId}/download`, "_blank");
   }
 
   if (loading) {

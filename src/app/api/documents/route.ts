@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { uploadFileToS3 } from "@/lib/s3";
+import { uploadFile } from "@/lib/storage";
 import { documentUploadSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Client not found" }, { status: 404 });
     }
 
-    const uploaded = await uploadFileToS3(file, clientId);
+    const uploaded = await uploadFile(file);
 
     const document = await db.document.create({
       data: {

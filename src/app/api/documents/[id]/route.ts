@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { deleteFileFromS3 } from "@/lib/s3";
 
 export async function GET(
   _request: NextRequest,
@@ -42,7 +41,6 @@ export async function DELETE(
       return Response.json({ error: "Document not found" }, { status: 404 });
     }
 
-    await deleteFileFromS3(document.fileKey);
     await db.document.delete({ where: { id } });
 
     return Response.json({ success: true });

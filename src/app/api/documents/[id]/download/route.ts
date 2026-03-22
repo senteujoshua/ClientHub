@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { getSignedDownloadUrl } from "@/lib/s3";
 
 export async function GET(
   _request: NextRequest,
@@ -19,14 +18,20 @@ export async function GET(
     return Response.json({ error: "Document not found" }, { status: 404 });
   }
 
-  try {
-    const signedUrl = await getSignedDownloadUrl(document.fileKey, 300); // 5 min expiry
-    return Response.json({ url: signedUrl });
-  } catch (error) {
-    console.error("[DOCUMENT DOWNLOAD]", error);
-    return Response.json(
-      { error: "Could not generate download URL" },
-      { status: 500 }
-    );
+  // fileUrl is stored as "data:<mimeType>;base64,<content>"
+  const commaIndex = document.fileUrl.indexOf(",");
+  if (commaIndex === -1) {
+    return Response.json({ error: "File data is corrupted" }, { status: 500 });
   }
+
+  const base64Data = document.fileUrl.slice(commaIndex + 1);
+  const buffer = Buffer.from(base64Data, "base64");
+
+  return new Response(buffer, {
+    headers: {
+      "Content-Type": document.mimeType,
+      "Content-Disposition": `attachment; filename="${encodeURIComponent(document.fileName)}"`,
+      "Content-Length": buffer.length.toString(),
+    },
+  });
 }

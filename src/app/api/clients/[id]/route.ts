@@ -87,21 +87,10 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const existing = await db.client.findUnique({
-      where: { id },
-      include: { documents: { select: { fileKey: true } } },
-    });
+    const existing = await db.client.findUnique({ where: { id } });
 
     if (!existing) {
       return Response.json({ error: "Client not found" }, { status: 404 });
-    }
-
-    // Delete all associated documents from S3 first
-    if (existing.documents.length > 0) {
-      const { deleteFileFromS3 } = await import("@/lib/s3");
-      await Promise.allSettled(
-        existing.documents.map((doc) => deleteFileFromS3(doc.fileKey))
-      );
     }
 
     await db.client.delete({ where: { id } });
