@@ -21,12 +21,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { identifier, password } = parsed.data;
 
-    const user = await db.user.findUnique({ where: { email } });
+    const isEmail = identifier.includes("@");
+    const user = await db.user.findFirst({
+      where: isEmail ? { email: identifier } : { username: identifier },
+    });
     if (!user) {
       return Response.json(
-        { error: "Invalid email or password" },
+        { error: "Invalid email/username or password" },
         { status: 401 }
       );
     }
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) {
       return Response.json(
-        { error: "Invalid email or password" },
+        { error: "Invalid email/username or password" },
         { status: 401 }
       );
     }

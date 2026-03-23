@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Mail, Lock, Phone, ArrowLeft } from "lucide-react";
+import { Building2, User, Lock, Phone, ArrowLeft } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ export default function LoginPage() {
       setCredError(json.error ?? "Login failed. Please try again.");
       return;
     }
-    setPendingEmail(data.email);
+    setPendingEmail(json.email);
     setMaskedPhone(json.maskedPhone);
     setStep("otp");
   }
@@ -145,13 +145,13 @@ export default function LoginPage() {
           {step === "credentials" ? (
             <form onSubmit={handleSubmit(onCredentialsSubmit)} className="space-y-5">
               <Input
-                label="Email address"
-                type="email"
-                placeholder="you@example.com"
-                icon={<Mail className="w-4 h-4" />}
-                error={errors.email?.message}
+                label="Email or username"
+                type="text"
+                placeholder="you@example.com or username"
+                icon={<User className="w-4 h-4" />}
+                error={errors.identifier?.message}
                 required
-                {...register("email")}
+                {...register("identifier")}
               />
               <Input
                 label="Password"

@@ -13,12 +13,16 @@ async function main() {
   const password = process.env.ADMIN_PASSWORD ?? "Admin@1234";
   const name = process.env.ADMIN_NAME ?? "System Administrator";
   const phone = process.env.ADMIN_PHONE ?? null;
+  const username = process.env.ADMIN_USERNAME ?? null;
 
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
-    if (phone && !existing.phone) {
-      await db.user.update({ where: { email }, data: { phone } });
-      console.log(`✅ Phone updated for existing admin: ${email}`);
+    const updates: Record<string, string> = {};
+    if (phone && !existing.phone) updates.phone = phone;
+    if (username && !existing.username) updates.username = username;
+    if (Object.keys(updates).length > 0) {
+      await db.user.update({ where: { email }, data: updates });
+      console.log(`✅ Updated existing admin (${Object.keys(updates).join(", ")}): ${email}`);
     } else {
       console.log(`Admin user already exists: ${email}`);
     }
@@ -27,7 +31,7 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(password, 12);
   await db.user.create({
-    data: { name, email, passwordHash, role: "admin", phone },
+    data: { name, email, passwordHash, role: "admin", phone, username },
   });
 
   console.log(`✅ Admin user created: ${email}`);
