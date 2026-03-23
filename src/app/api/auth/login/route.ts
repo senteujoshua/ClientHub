@@ -1,8 +1,13 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { signToken, setAuthCookie } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations";
+import { sendVerification } from "@/lib/twilio";
 import bcrypt from "bcryptjs";
+
+function maskPhone(phone: string): string {
+  if (phone.length <= 4) return "****";
+  return phone.slice(0, -4).replace(/\d/g, "*") + phone.slice(-4);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,22 +39,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = await signToken({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
+    if (!user.phone) {
+      return Response.json(
+        { error: "No phone number configured for your account. Contact your administrator." },
+        { status: 403 }
+      );
+    }
+
+    // Mark that the user has passed the password step (10-min window)
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await db.user.update({
+      where: { id: user.id },
+      data: { otpCode: null, otpExpiresAt: expiresAt },
     });
 
-    await setAuthCookie(token);
+    await sendVerification(user.phone);
 
     return Response.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      requiresOtp: true,
+      maskedPhone: maskPhone(user.phone),
+      email: user.email,
     });
   } catch (error) {
     console.error("[AUTH LOGIN]", error);
